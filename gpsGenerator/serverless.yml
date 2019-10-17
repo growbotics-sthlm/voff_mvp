@@ -1,0 +1,42 @@
+service: gps
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  region: eu-west-1
+  role: arn:aws:iam::885606191263:role/lamda_dynamo
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:*"
+
+functions:
+  create:
+    handler: src/handler.handler
+    events:
+      - http:
+          path: gps
+          method: post
+          cors: true
+
+custom:
+  serverless-offline:
+    port: 4000
+    noTimeout: true
+  custom:
+    webpack:
+      packager: 'yarn'
+
+plugins:
+- serverless-webpack
+- serverless-offline
